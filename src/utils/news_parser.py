@@ -22,6 +22,10 @@ def get(url: str) -> str:
     :raises requests.RequestException: If there is an issue with the HTTP request.
     """
     response = requests.get(url, headers=REQUEST_HEADERS)
+    if not response.ok:
+        raise requests.RequestException(
+            f"Request failed with status code: {response.status_code}"
+        )
     return response.text
 
 
