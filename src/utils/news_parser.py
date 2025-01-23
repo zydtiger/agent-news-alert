@@ -1,4 +1,6 @@
 import json
+import html
+import re
 import feedparser
 from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel, Field, HttpUrl, BeforeValidator
@@ -74,7 +76,8 @@ def parse_feed(news_feed: NewsFeed) -> list[NewsArticle]:
                     date=article["published_parsed"],
                     url=article["link"],
                     source=news_feed.name,
-                    summary=article["summary"],
+                    # Strip HTML tags and unescape HTML entities from the summary
+                    summary=re.sub(r"<[^>]*>", "", html.unescape(article["summary"])),
                     priority=0,
                 )
             )
