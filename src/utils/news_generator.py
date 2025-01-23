@@ -14,6 +14,7 @@ def generate_email_body(news_articles: list[NewsArticle]) -> str:
     <head>
       <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; }
+        h1 { text-align: center; }
         .news-item { margin-bottom: 20px; padding: 10px; border-bottom: 1px solid #ddd; }
         .news-title { font-size: 18px; font-weight: bold; color: #333; }
         .news-summary { margin: 10px 0; color: #555; }
