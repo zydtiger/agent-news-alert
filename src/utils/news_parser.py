@@ -86,24 +86,6 @@ def parse_feed(news_feed: NewsFeed) -> list[NewsArticle]:
     return articles
 
 
-def parse_feeds() -> list[NewsArticle]:
-    """
-    Parses all news feeds defined in the configuration file.
-
-    :return: A list of all parsed news articles.
-    :raises FileNotFoundError: If the configuration file is missing.
-    :raises ParserException: If an error occurs while parsing any feed.
-    """
-    with open("./conf/sources.json", "r") as sources_conf:
-        sources = json.load(sources_conf)
-
-    sources = [NewsFeed(**source) for source in sources]
-    articles = []
-    for source in sources:
-        articles.extend(parse_feed(source))
-    return articles
-
-
 def remove_old_news(articles: list[NewsArticle]) -> list[NewsArticle]:
     """
     Removes articles older than 24 hours.
