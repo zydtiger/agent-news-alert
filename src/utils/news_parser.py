@@ -1,99 +1,122 @@
-import requests
-import re
-from markdownify import markdownify
+import json
+import feedparser
+from datetime import datetime, timedelta, timezone
+from pydantic import BaseModel, Field, HttpUrl, BeforeValidator
+from typing import Any, Annotated
 
 REQUEST_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36",
 }
 
 
 class ParserException(Exception):
-    """Custom exception for errors encountered during parsing."""
+    """
+    Custom exception for errors encountered during parsing.
+    """
 
     pass
 
 
-def get(url: str) -> str:
+class NewsFeed(BaseModel):
     """
-    Sends a GET request to the specified URL and retrieves the response content.
-
-    :param url: The URL to send the GET request to.
-    :return: The response content as a string.
-    :raises requests.RequestException: If there is an issue with the HTTP request.
+    Represents a news feed source.
     """
-    response = requests.get(url, headers=REQUEST_HEADERS)
-    if not response.ok:
-        raise requests.RequestException(
-            f"Request failed with status code: {response.status_code}"
-        )
-    return response.text
+
+    name: str = Field(description="The name of the news agency")
+    url: HttpUrl = Field(description="The URL of the news feed")
 
 
-def extract_body(html: str) -> str:
+def parse_struct_date(value: list[int]) -> datetime:
     """
-    Extracts the content of the <body> tag from an HTML string.
+    Parses a date represented as a list of integers.
 
-    :param html: A string containing the HTML content.
-    :return: The content inside the <body> tag as a string.
-    :raises ParserException: If the <body> tag is not found in the HTML.
+    :param value: A list containing date and time components.
+    :return: A datetime object with timezone information.
     """
-    match = re.search(r"<body[^>]*>([\s\S]*?)<\/body>", html, flags=re.IGNORECASE)
-    if match is None:
-        raise ParserException("HTML body not found")
-    return match.group(1)
+    return datetime(*value[:6], tzinfo=timezone.utc)
 
 
-def exclude_unwanted(html: str) -> str:
+class NewsArticle(BaseModel):
     """
-    Removes unwanted elements such as <script>, <style>, <noscript>, comments,
-    and other media tags from the provided HTML string.
-
-    :param html: A string containing the HTML content.
-    :return: The cleaned HTML string with unwanted elements removed.
+    Represents a news article.
     """
-    return re.sub(
-        r"<script[^>]*>([\s\S]*?)<\/script>|"
-        r"<style[^>]*>([\s\S]*?)<\/style>|"
-        r"<noscript[^>]*>([\s\S]*?)<\/noscript>|"
-        r"<!--[\s\S]*?-->|"
-        r"<iframe[^>]*>([\s\S]*?)<\/iframe>|"
-        r"<object[^>]*>([\s\S]*?)<\/object>|"
-        r"<embed[^>]*>([\s\S]*?)<\/embed>|"
-        r"<video[^>]*>([\s\S]*?)<\/video>|"
-        r"<audio[^>]*>([\s\S]*?)<\/audio>|"
-        r"<svg[^>]*>([\s\S]*?)<\/svg>",
-        "",
-        html,
-        flags=re.IGNORECASE,
+
+    title: str = Field(description="The title of the news article")
+    date: Annotated[datetime, BeforeValidator(parse_struct_date)] = Field(
+        description="The date of the news article"
+    )
+    url: HttpUrl = Field(description="The URL of the news article")
+    source: str = Field(
+        description="The source of the news article (e.g., New York Times)"
+    )
+    summary: str = Field(description="The summary of the news article")
+    priority: int = Field(
+        description="The priority of the news article, between 0 and 2"
     )
 
 
-def fix_links(source: str, html: str) -> str:
+def parse_feed(news_feed: NewsFeed) -> list[NewsArticle]:
     """
-    Converts relative links in an HTML string to absolute links based on the source URL.
+    Parses a single news feed and extracts articles.
 
-    :param source: The base URL of the HTML source.
-    :param html: A string containing the HTML content with relative links.
-    :return: The HTML string with relative links converted to absolute links.
-    :raises ParserException: If the source URL cannot be parsed.
+    :param news_feed: The news feed to parse.
+    :return: A list of parsed news articles.
+    :raises ParserException: If an error occurs while parsing the feed.
     """
-    match = re.match(r"^(https?:\/\/[^/]+)", source)
-    if match is None:
-        raise ParserException(f"Source URL can not be parsed: {source}")
-    base_url = match.group(1)
+    feed = feedparser.parse(str(news_feed.url), request_headers=REQUEST_HEADERS)
+    articles = []
+    entries: list[dict[str, Any]] = feed.entries
+    for article in entries:
+        try:
+            articles.append(
+                NewsArticle(
+                    title=article["title"],
+                    date=article["published_parsed"],
+                    url=article["link"],
+                    source=news_feed.name,
+                    summary=article["summary"],
+                    priority=0,
+                )
+            )
+        except Exception as e:
+            raise ParserException(f"Error parsing feed: {e}")
+    return articles
 
-    return re.sub(
-        r'href="\/(.*?)"',
-        lambda match: f'href="{base_url}/{match.group(1)}"',
-        html,
-    )
 
-
-def to_markdown(html: str) -> str:
+def parse_feeds() -> list[NewsArticle]:
     """
-    Converts an HTML string to Markdown format.
+    Parses all news feeds defined in the configuration file.
 
-    :param html: A string containing the HTML content.
-    :return: A string containing the converted Markdown content.
+    :return: A list of all parsed news articles.
+    :raises FileNotFoundError: If the configuration file is missing.
+    :raises ParserException: If an error occurs while parsing any feed.
     """
-    return markdownify(html)
+    with open("./conf/sources.json", "r") as sources_conf:
+        sources = json.load(sources_conf)
+
+    sources = [NewsFeed(**source) for source in sources]
+    articles = []
+    for source in sources:
+        articles.extend(parse_feed(source))
+    return articles
+
+
+def remove_old_news(articles: list[NewsArticle]) -> list[NewsArticle]:
+    """
+    Removes articles older than 24 hours.
+
+    :param articles: The list of news articles to filter.
+    :return: A list of news articles published in the last 24 hours.
+    """
+    now = datetime.now(timezone.utc)
+    return [article for article in articles if article.date > now - timedelta(hours=24)]
+
+
+def remove_empty_news(articles: list[NewsArticle]) -> list[NewsArticle]:
+    """
+    Removes articles that have empty summaries.
+
+    :param articles: The list of news articles to filter.
+    :return: A list of news articles with non-empty summaries.
+    """
+    return [article for article in articles if article.summary != ""]
