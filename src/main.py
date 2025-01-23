@@ -1,6 +1,6 @@
 import json
 from loguru import logger
-from utils import news_parser, news_generator, agent, send_email
+from utils import news_parser, agent, email_generator, send_email
 from utils.news_parser import NewsFeed, ParserException, parse_feed
 from utils.agent import config
 from conf.secrets import RECEIVER_EMAIL
@@ -32,6 +32,6 @@ articles_rated.sort(key=lambda x: x.priority, reverse=True)
 
 # Send email
 logger.info("Generating email for articles")
-email_body = news_generator.generate_email_body(articles_rated[:10])
+email_body = email_generator.generate_email_body(articles_rated[:10])
 send_email.send_email(email_body)
 logger.success(f"Email sent to: {RECEIVER_EMAIL}")
