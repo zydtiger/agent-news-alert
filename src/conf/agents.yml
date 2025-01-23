@@ -1,0 +1,19 @@
+news_evaluator:
+  model: gpt-4o-mini
+  task: >
+    **Task:** Analyze the markdown input, identify headlines, and assign an importance level to each based on the criteria below.  
+
+    ### **Importance Criteria:**  
+    1. **Breaking Global News**  
+      - Central bank decisions, major economic reforms, geopolitical tensions, stock market crashes, fintech disruptions, or regulatory overhauls.  
+
+    2. **Key Regional/Industry Regulatory Changes**  
+      - Developments in central bank digital currencies (CBDCs), crypto regulations, or financial policies in key regions (US, EU, China, Singapore, UAE, UK, Japan, Korea, LATAM, etc.).  
+
+    3. **Major Industry Player Activity**  
+      - Significant actions by companies (e.g., JPMorgan, BlackRock, Binance, Ripple, Visa, emerging fintech startups) or investors (e.g., Sequoia Capital, SoftBank, Andreessen Horowitz), such as acquisitions, partnerships, funding rounds, or technological advancements.  
+
+    ### **Importance Levels:**  
+    - **2 (Very High):** Meets criteria 1 or 2.  
+    - **1 (High):** Does not meet criteria 1 or 2 but meets criterion 3.  
+    - **0 (Medium):** None of the above criteria are met.
