@@ -1,7 +1,7 @@
 import json
 from loguru import logger
 from utils import news_parser, agent, email_generator, send_email
-from utils.news_parser import NewsFeed, ParserException, parse_feed
+from utils.news_parser import NewsFeed, ParserException
 from utils.agent import config
 from conf.secrets import RECEIVER_EMAIL
 
@@ -14,7 +14,7 @@ sources = [NewsFeed(**source) for source in sources]
 articles = []
 for source in sources:
     try:
-        articles.extend(parse_feed(source))
+        articles.extend(news_parser.parse_feed(source))
         logger.info(f"Parsed RSS endpoint: {source.name}, {source.url}")
     except ParserException as e:
         logger.warning(f"Error parsing RSS endpoint: {source.name}, {source.url}")
