@@ -44,7 +44,7 @@ Agent News Alert is a Python-based project that ingests RSS feeds, evaluates the
    To run the application in development mode:
 
    ```bash
-   cd src/ && poetry run python main.py
+   poetry run python main.py
    ```
 
 ### Production Mode
