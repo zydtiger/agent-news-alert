@@ -6,15 +6,15 @@ Agent News Alert is a Python-based project that ingests RSS feeds, evaluates the
 
 1. **Ingestion**:
 
-   - Reads RSS feeds from `/src/conf/sources.json`.
+   - Reads RSS feeds from `conf/sources.json`.
 
 2. **Evaluation**:
 
-   - Uses an LLM agent to evaluate and prioritize articles based on the configuration in `/src/conf/agents.yml`.
+   - Uses an LLM agent to evaluate and prioritize articles based on the configuration in `conf/agents.yml`.
 
 3. **Email Notification**:
 
-   - Sends a daily email at **9:00 AM (New York time)** with the top-priority articles to the user, as defined in `/src/conf/secrets.py`.
+   - Sends a daily email at **9:00 AM (New York time)** with the top-priority articles to the user, as defined in `conf/secrets.py`.
 
 ## Installation and Usage
 
@@ -23,7 +23,7 @@ Agent News Alert is a Python-based project that ingests RSS feeds, evaluates the
 - Python 3.12 or higher
 - [Poetry](https://python-poetry.org/) for dependency management
 - Docker (for production)
-- Set up `/src/conf/secrets.py` with fields listed in `/src/conf/secrets.template.py`
+- Set up `conf/secrets.py` with fields listed in `conf/secrets.template.py`
 
 ### Development Mode
 
@@ -64,15 +64,15 @@ Agent News Alert is a Python-based project that ingests RSS feeds, evaluates the
 
 ### RSS Feeds
 
-- RSS feeds are defined in `/src/conf/sources.json`.
+- RSS feeds are defined in `conf/sources.json`.
 - Add or update sources in this file to customize the feeds ingested by the application.
 
 ### LLM Agent
 
-- The agent configuration is defined in `/src/conf/agents.yml`.
+- The agent configuration is defined in `conf/agents.yml`.
 - This file determines the model and prompt used by the LLM agent.
 
 ### Secrets
 
-- User-specific secrets (e.g., email credentials) are defined in `/src/conf/secrets.py`.
-- This file is ignored by Git for security purposes. Use the template file `/src/conf/secrets.template.py` to create your own `secrets.py`.
+- User-specific secrets (e.g., email credentials) are defined in `conf/secrets.py`.
+- This file is ignored by Git for security purposes. Use the template file `conf/secrets.template.py` to create your own `secrets.py`.
