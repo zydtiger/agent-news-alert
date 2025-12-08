@@ -1,3 +1,4 @@
+from pathlib import Path
 from zoneinfo import ZoneInfo
 from utils.news_parser import NewsArticle
 
@@ -9,39 +10,25 @@ def generate_email_body(news_articles: list[NewsArticle]) -> str:
     :param news_articles: A list of NewsArticle objects containing news article data.
     :return: A string containing the HTML email body.
     """
-    email_body = """
-    <html>
-    <head>
-      <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; }
-        h1 { text-align: center; }
-        .news-item { margin-bottom: 20px; padding: 10px; border-bottom: 1px solid #ddd; }
-        .news-title { font-size: 18px; font-weight: bold; color: #333; }
-        .news-summary { margin: 10px 0; color: #555; }
-        .news-meta { font-size: 12px; color: #888; }
-        .news-source { color: #007bff; text-decoration: none; }
-      </style>
-    </head>
-    <body>
-      <h1>Latest News</h1>
-    """
+    # Load the email template
+    template_path = Path(__file__).resolve().parent.parent / "templates" / "email_template.html"
+    with open(template_path, "r", encoding="utf-8") as f:
+        email_template = f.read()
 
+    news_items_html = ""
     for i, article in enumerate(news_articles):
         date = article.date.astimezone(ZoneInfo("America/New_York"))
+        formatted_date = date.strftime('%b %d, %Y %H:%M')
 
-        email_body += f"""
+        news_items_html += f"""
         <div class="news-item">
             <a href="{article.url}" class="news-title">{i+1}. {article.title}</a>
             <p class="news-summary">{article.summary}</p>
-            <p class="news-meta">
-                <span>Source: <a href="{article.url}" class="news-source">{article.source}</a></span><br/>
-                <span>Date: {date.strftime('%b %d, %Y %H:%M')}</span>
-            </p>
+            <div class="news-meta">
+                <span class="news-source">{article.source}</span>
+                <span>{formatted_date}</span>
+            </div>
         </div>
         """
 
-    email_body += """
-    </body>
-    </html>
-    """
-    return email_body
+    return email_template.replace("{{NEWS_ITEMS}}", news_items_html)
