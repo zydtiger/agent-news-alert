@@ -1,9 +1,9 @@
 services:
-  news_alert:
+  news-alert:
     build:
       context: .
-    container_name: news_alert
-    image: news_alert:latest
+    container_name: news-alert
+    image: news-alert:latest
     restart: unless-stopped
     environment:
       - TZ=America/New_York

@@ -1,4 +1,4 @@
-FROM python:3.12
+FROM python:3.14.1-slim-bookworm
 
 # Set the working directory
 WORKDIR /app
@@ -7,12 +7,12 @@ WORKDIR /app
 COPY ./ /app/
 
 # Install dependencies
-RUN pip install poetry
-RUN poetry install
+RUN pip install uv
+RUN uv sync --frozen
 
 # Install cron task
 RUN apt-get update && apt-get install -y cron && apt-get clean
-RUN echo "0 9 * * * cd /app && /usr/local/bin/poetry run python main.py >> /proc/1/fd/1 2>&1" > /etc/cron.d/news_alert
+RUN echo "0 9 * * * cd /app && /usr/local/bin/uv run python main.py >> /proc/1/fd/1 2>&1" > /etc/cron.d/news_alert
 RUN chmod 644 /etc/cron.d/news_alert
 RUN crontab /etc/cron.d/news_alert
 
