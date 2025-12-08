@@ -1,5 +1,5 @@
 news_evaluator:
-  model: gpt-4o-mini
+  model: gpt-5-mini
   task: >
     **Task:** Analyze the markdown input, identify headlines, and assign an importance level to each based on the criteria below.  
 
