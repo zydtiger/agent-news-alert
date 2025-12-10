@@ -1,14 +1,10 @@
 import yaml
-import os
 from langchain_openai import ChatOpenAI
 from langchain.schema import SystemMessage, HumanMessage
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 from utils.news_parser import NewsArticle
-from conf.secrets import OPENAI_API_KEY
-
-if not os.environ.get("OPENAI_API_KEY"):
-    os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+from conf.secrets import OPENAI_API_KEY, OPENAI_COMPATIBLE_ENDPOINT
 
 with open("./conf/agents.yml", "r") as agents_conf:
     config = yaml.safe_load(agents_conf)
@@ -32,9 +28,11 @@ def evaluate(articles: list[NewsArticle]):
     :param articles: A list of NewsArticle objects to evaluate.
     :return: None
     """
-    model = ChatOpenAI(model=config["news_evaluator"]["model"]).with_structured_output(
-        PriorityRating
-    )
+    model = ChatOpenAI(
+        model=config["news_evaluator"]["model"],
+        api_key=SecretStr(OPENAI_API_KEY),
+        base_url=OPENAI_COMPATIBLE_ENDPOINT,
+    ).with_structured_output(PriorityRating)
     system_message = SystemMessage(content=config["news_evaluator"]["task"])
     human_messages = [
         HumanMessage(content=article.model_dump_json()) for article in articles

@@ -1,5 +1,6 @@
 from typing import Final
 
+OPENAI_COMPATIBLE_ENDPOINT: Final[str] = ""
 OPENAI_API_KEY: Final[str] = ""
 
 SMTP_HOST: Final[str] = ""
