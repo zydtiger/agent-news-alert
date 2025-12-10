@@ -3,7 +3,8 @@ import re
 import feedparser
 from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel, Field, HttpUrl, BeforeValidator
-from typing import Any, Annotated
+from typing import Annotated
+from typing import cast
 
 REQUEST_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36",
@@ -66,9 +67,10 @@ def parse_feed(news_feed: NewsFeed) -> list[NewsArticle]:
     """
     feed = feedparser.parse(str(news_feed.url), request_headers=REQUEST_HEADERS)
     articles = []
-    entries: list[dict[str, Any]] = feed.entries
+    entries = feed.entries
     for article in entries:
         try:
+            article = cast(dict, article)
             articles.append(
                 NewsArticle(
                     title=article["title"],
@@ -104,3 +106,36 @@ def remove_empty_news(articles: list[NewsArticle]) -> list[NewsArticle]:
     :return: A list of news articles with non-empty summaries.
     """
     return [article for article in articles if article.summary != ""]
+
+
+def remove_duplicate_articles(articles: list[NewsArticle]) -> list[NewsArticle]:
+    """
+    Removes duplicate articles based on URL and title similarity.
+
+    :param articles: The list of news articles to filter.
+    :return: A list of unique news articles.
+    """
+    seen_urls = set()
+    seen_titles_normalized = set()
+    unique_articles = []
+
+    for article in articles:
+        # Check for duplicate URLs (exact match)
+        article_url = str(article.url)
+        if article_url in seen_urls:
+            continue
+
+        # Check for duplicate titles (normalized to handle minor variations)
+        # Convert to lowercase and remove special characters/extra whitespace
+        title_normalized = re.sub(r"\s+", " ", article.title.lower().strip())
+        title_normalized = re.sub(r"[^\w\s]", "", title_normalized)
+
+        if title_normalized in seen_titles_normalized:
+            continue
+
+        # If no duplicate found, add to unique list and track identifiers
+        seen_urls.add(article_url)
+        seen_titles_normalized.add(title_normalized)
+        unique_articles.append(article)
+
+    return unique_articles

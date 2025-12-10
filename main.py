@@ -23,6 +23,7 @@ def main():
 
     articles = news_parser.remove_old_news(articles)
     articles = news_parser.remove_empty_news(articles)
+    articles = news_parser.remove_duplicate_articles(articles)
 
     # Rate articles using agent
     logger.info(
