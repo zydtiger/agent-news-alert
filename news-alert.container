@@ -1,0 +1,15 @@
+[Unit]
+Description=News Alert Service
+After=network-online.target
+
+[Container]
+Image=news-alert:latest
+ContainerName=news-alert
+Environment=TZ=America/New_York
+
+[Service]
+Restart=always
+TimeoutStartSec=600
+
+[Install]
+WantedBy=default.target
